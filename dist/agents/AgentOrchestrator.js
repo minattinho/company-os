@@ -165,6 +165,15 @@ class AgentOrchestrator extends events_1.EventEmitter {
             throw new Error(`Agent ${agentId} not found`);
         return agent.getPromptContext();
     }
+    setPendingQuestion(agentId, question) {
+        const agent = this.agents.get(agentId);
+        if (!agent)
+            throw new Error(`Agent ${agentId} not found`);
+        agent.setCurrentTask(`Thinking: ${question.substring(0, 100)}`);
+        agent.setState('thinking');
+        this.emit('agent:update', agent.getData());
+        return agent.getData();
+    }
     recordAgentAnswer(agentId, question, answer) {
         const agent = this.agents.get(agentId);
         if (!agent)

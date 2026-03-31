@@ -8,29 +8,49 @@ O **Company-OS** instala-se em qualquer projeto Node.js, mapeia a estrutura (`co
 
 ---
 
-## 🚀 Como Instalar e Iniciar no Claude Code / Antigravity
+## 🚀 Instalação
 
-Você pode instalar o Company-OS de três formas:
+### Via Claude Code Marketplace (Recomendado)
 
-1. **Globalmente:** `npm install -g company-os`  
-2. **Como dev dependency no projeto:** `npm install -D company-os`  
-3. **Direto via npx (Recomendado):** `npx company-os start`
+Instale diretamente no Claude Code com dois comandos:
 
-### Passo a Passo de Uso na IDE
+```
+/plugin marketplace add minattinho/company-os
+/plugin install company-os@company-os
+```
 
-1. Abra o terminal integrado da sua IDE (Antigravity/Claude Code) no diretório do seu projeto.
-2. Inicie o servidor do escritório virtual:
-   ```bash
-   npx company-os start
-   ```
-   > Se a porta 3000 já estiver em uso, utilize: `npx company-os start -p 4000`
-3. Abra **http://localhost:3000** no seu navegador para ver o escritório.
-4. Volte para o chat da IDE e peça o que quiser. Exemplos:
-   - *"Analise o projeto e peça para o Arquiteto explicar a arquitetura."*
-   - *"Convoque uma daily meeting com todos os agentes para discutir o que faremos hoje."*
-   - *"Faça o desenvolvedor Backend falar no escritório virtual o que ele acha dessa função."*
+A skill **company-os** estará disponível automaticamente no Claude Code após a instalação.
 
-**A IDE automaticamente consultará a REST API do Company-OS para animar os agentes e enviar as respostas diretamente para o balão de fala no escritório 2D.**
+---
+
+### Via npm (Global)
+
+Para usar os comandos diretamente no terminal de qualquer projeto:
+
+```bash
+npm install -g company-os
+```
+
+Depois, de dentro de qualquer projeto:
+
+```bash
+company-os start              # Inicia o servidor visual
+company-os scan               # Escaneia o projeto atual
+company-os scan --path ./app  # Escaneia outro diretório
+```
+
+> Se a porta 3000 já estiver em uso: `company-os start -p 4000`
+
+### Uso na IDE após instalar
+
+1. Abra o Claude Code no diretório do seu projeto.
+2. Inicie o servidor: `company-os start`
+3. Abra **http://localhost:3000** para ver o escritório.
+4. Peça para a IDE interagir com os agentes. Exemplos:
+   - *"Convoque uma daily meeting com todos os agentes."*
+   - *"Faça o Backend falar o que acha dessa função."*
+
+**A IDE consultará a REST API do Company-OS para animar os agentes e exibir as respostas nos balões de fala.**
 
 ---
 

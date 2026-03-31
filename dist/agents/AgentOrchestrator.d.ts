@@ -41,6 +41,7 @@ export declare class AgentOrchestrator extends EventEmitter {
         memory: string[];
         currentTask: string;
     };
+    setPendingQuestion(agentId: string, question: string): AgentData;
     recordAgentAnswer(agentId: string, question: string, answer: string): {
         answer: string;
         agent: AgentData;

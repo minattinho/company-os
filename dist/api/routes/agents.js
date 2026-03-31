@@ -56,6 +56,25 @@ function agentsRouter(orchestrator) {
             res.status(404).json({ error: err.message });
         }
     });
+    // POST /api/agents/:id/ask — stores pending question (Claude Code is the AI responder via /speak).
+    router.post('/:id/ask', (req, res) => {
+        try {
+            const { question, answer } = req.body;
+            const agentId = req.params['id'] ?? '';
+            if (answer) {
+                const result = orchestrator.recordAgentAnswer(agentId, question ?? '', answer);
+                res.json({ agentId, question: question ?? '', answer, agent: result.agent });
+            }
+            else {
+                const agent = orchestrator.setPendingQuestion(agentId, question ?? '');
+                const context = orchestrator.getAgentPromptContext(agentId);
+                res.json({ pending: true, agentId, agentName: agent.name, question: question ?? '', context });
+            }
+        }
+        catch (err) {
+            res.status(404).json({ error: err.message });
+        }
+    });
     // POST /api/agents/:id/speak
     router.post('/:id/speak', (req, res) => {
         try {

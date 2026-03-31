@@ -313,6 +313,8 @@ function openPanel(agent) {
   document.getElementById('panel-role').textContent = `${agent.role} · ${teams.find(t=>t.id===agent.teamId)?.name ?? 'No Team'}`;
   document.getElementById('panel-state').textContent = agent.state ?? 'idle';
   document.getElementById('panel-task').textContent = agent.currentTask ?? 'Idle';
+  const hintEx = document.getElementById('panel-hint-example');
+  if (hintEx) hintEx.textContent = `Ex: "${agent.name}, o que você acha do projeto?"`;
   updatePanel(agent);
 
   // Mini avatar
@@ -367,7 +369,13 @@ document.getElementById('panel-send').addEventListener('click', async () => {
       body: JSON.stringify({ question: q })
     });
     const data = await res.json();
-    if (data.answer) addSpeechLog(selectedAgent.name, data.answer);
+    if (data.answer) {
+      addSpeechLog(selectedAgent.name, data.answer);
+    } else if (data.pending) {
+      const clipText = `${data.agentName}: ${q}`;
+      navigator.clipboard.writeText(clipText).catch(() => {});
+      notify('Copiado!', `Cole no Claude Code: "${clipText}"`, 'info');
+    }
   } catch(e) { notify('Error', 'Failed to ask agent', 'error'); }
   finally {
     input.disabled = false;

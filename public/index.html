@@ -336,6 +336,15 @@
     }
     .panel-send:hover { background: #6d28d9; }
 
+    .panel-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      padding: 4px 0;
+    }
+    .panel-hint strong { color: var(--accent); }
+    .panel-hint em { display: block; margin-top: 4px; font-style: normal; color: var(--text-dim, #666); }
+
     /* ─── MEETING OVERLAY ─────────────────────────────────────────────────── */
     #meeting-overlay {
       position: fixed;
@@ -872,8 +881,7 @@
     </div>
   </div>
   <div class="panel-ask">
-    <textarea class="panel-input" id="panel-question" placeholder="Ask this agent anything about your project..."></textarea>
-    <button class="panel-send" id="panel-send">→ Ask</button>
+    <div class="panel-hint">💬 Para conversar com este agente, mencione o nome dele no <strong>Claude Code</strong>.<br><em id="panel-hint-example">Ex: "Marina Lima, o que você acha do projeto?"</em></div>
   </div>
 </div>
 
