@@ -1,0 +1,24 @@
+{
+  "name": "company-os",
+  "displayName": "Company-OS",
+  "version": "1.0.0",
+  "author": "minattinho",
+  "license": "MIT",
+  "repository": "https://github.com/minattinho/company-os",
+  "description": "AI-powered visual virtual office SDK. Scans any Node.js project, generates a context.json snapshot, and populates a 2D HTML5 Canvas office with agents representing team members. Controlled entirely by the IDE via REST API — no Anthropic API key required on the project.",
+  "keywords": [
+    "company-os",
+    "virtual-office",
+    "agents",
+    "canvas",
+    "sdk",
+    "orchestration",
+    "meeting",
+    "team",
+    "context",
+    "scanner",
+    "claude",
+    "antigravity"
+  ],
+  "platforms": ["claude"]
+}

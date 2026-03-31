@@ -107,8 +107,9 @@ program
     .command('start')
     .description('Start the Company-OS server and visual office')
     .option('-p, --port <port>', 'Port to listen on', '3000')
+    .option('--project-path <path>', 'Path to project to scan (default: current directory)')
     .action(async (opts) => {
-    const projectPath = process.cwd();
+    const projectPath = opts.projectPath ? path.resolve(opts.projectPath) : process.cwd();
     console.log('\n🏢 Company-OS Starting...\n');
     const config = await loadConfig(projectPath);
     config.port = parseInt(opts.port, 10);
@@ -163,8 +164,9 @@ program
 program
     .command('scan')
     .description('Scan project and generate context.json')
-    .action(async () => {
-    const projectPath = process.cwd();
+    .option('-p, --path <path>', 'Path to project to scan (default: current directory)')
+    .action(async (opts) => {
+    const projectPath = opts.path ? path.resolve(opts.path) : process.cwd();
     const config = await loadConfig(projectPath);
     console.log('🔍 Scanning project...');
     const scanner = new ProjectScanner_1.ProjectScanner(projectPath, config.scanIgnore);

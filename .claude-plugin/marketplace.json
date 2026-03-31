@@ -1,23 +1,34 @@
 {
   "name": "company-os",
-  "owner": {
-    "name": "Gabriel"
-  },
+  "id": "company-os",
+  "owner": { "name": "minattinho" },
   "metadata": {
-    "description": "Company OS — virtual office SDK with AI agent orchestration",
+    "description": "AI-powered visual virtual office SDK for any Node.js project",
     "version": "1.0.0"
   },
   "plugins": [
     {
       "name": "company-os",
       "source": "./",
-      "description": "Virtual office SDK: agents, teams, meetings, brand kit file manager and 2D canvas dashboard",
+      "description": "AI-powered visual virtual office SDK. Scans any Node.js project, generates a context.json snapshot, and populates a 2D HTML5 Canvas office with agents representing team members. Controlled entirely by the IDE via REST API — no Anthropic API key required on the project.",
       "version": "1.0.0",
-      "author": {
-        "name": "Gabriel"
-      },
+      "author": { "name": "minattinho" },
+      "keywords": [
+        "company-os",
+        "virtual-office",
+        "agents",
+        "canvas",
+        "sdk",
+        "orchestration",
+        "meeting",
+        "team",
+        "context",
+        "scanner",
+        "claude",
+        "antigravity"
+      ],
       "category": "productivity",
-      "keywords": ["team", "agents", "virtual-office", "orchestration", "brand-kit"]
+      "strict": false
     }
   ]
 }
