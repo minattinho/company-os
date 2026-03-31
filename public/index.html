@@ -526,6 +526,38 @@
     .color-swatch:hover { transform: scale(1.15); }
     .color-swatch.selected { border-color: white; box-shadow: 0 0 0 2px var(--accent); }
 
+    .preset-cards-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .preset-card {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1.5px solid var(--border);
+      background: var(--surface2);
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 13px;
+      color: var(--text);
+    }
+    .preset-card:hover { border-color: var(--accent); background: var(--surface3); }
+    .preset-card.selected { border-color: var(--accent); background: rgba(99,102,241,0.15); color: white; }
+    .preset-card-icon { font-size: 16px; }
+    .preset-card-name { font-weight: 600; }
+    .preset-card-agent { flex-direction: column; align-items: flex-start; gap: 2px; }
+    .preset-card-role { font-size: 11px; color: var(--text-muted); }
+    .preset-divider {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin: 12px 0 4px;
+      letter-spacing: 0.03em;
+    }
+
     .option-row { display: flex; gap: 6px; }
     .option-btn {
       padding: 5px 12px;
@@ -750,11 +782,9 @@
 <!-- Notifications -->
 <div id="notifications"></div>
 
-<script src="/socket.io/socket.io.js"></script>
-<script src="engine.js"></script>
-<script src="game.js"></script>
 <script>
   // Fallback cancelável — game.js pode limpar via window._loadingFallback
+  // Deve ser definido ANTES dos scripts que conectam o socket
   window._loadingFallback = setTimeout(function() {
     var ls = document.getElementById('loading-screen');
     if (ls && !ls.classList.contains('hidden')) {
@@ -768,5 +798,8 @@
     }
   }, 12000);
 </script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="engine.js"></script>
+<script src="game.js"></script>
 </body>
 </html>

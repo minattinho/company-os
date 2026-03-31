@@ -3,8 +3,50 @@
 // ============================================================
 'use strict';
 
-const { TILE, FLOOR_HEIGHT, FLOOR_WIDTH, OUTFIT_COLORS, HAIR_COLORS, SKIN_TONES,
-        drawAgentSprite, ChatBubble, Camera, TileMap } = window.CompanyEngine;
+
+// ─── PRESET TEAMS & AGENTS ────────────────────────────────────────────────────
+const PRESET_TEAMS = [
+  {
+    name: 'Engineering',
+    color: '#7c3aed',
+    icon: '💻',
+    agents: [
+      { name: 'Alex Costa',   role: 'CTO',               skinTone: 2, hairStyle: 1 },
+      { name: 'Marina Lima',  role: 'Senior Developer',   skinTone: 1, hairStyle: 3 },
+      { name: 'Carlos Souza', role: 'DevOps Engineer',    skinTone: 3, hairStyle: 2 },
+    ]
+  },
+  {
+    name: 'Design',
+    color: '#06b6d4',
+    icon: '🎨',
+    agents: [
+      { name: 'Julia Mendes', role: 'Head of Design',     skinTone: 2, hairStyle: 4 },
+      { name: 'Pedro Alves',  role: 'UI/UX Designer',     skinTone: 1, hairStyle: 2 },
+      { name: 'Ana Ferreira', role: 'Motion Designer',    skinTone: 4, hairStyle: 1 },
+    ]
+  },
+  {
+    name: 'Product',
+    color: '#10b981',
+    icon: '📦',
+    agents: [
+      { name: 'Lucas Rocha',  role: 'CPO',                skinTone: 3, hairStyle: 3 },
+      { name: 'Sofia Ramos',  role: 'Product Manager',    skinTone: 2, hairStyle: 2 },
+      { name: 'Bruno Dias',   role: 'Business Analyst',   skinTone: 1, hairStyle: 4 },
+    ]
+  },
+  {
+    name: 'Marketing',
+    color: '#f59e0b',
+    icon: '📣',
+    agents: [
+      { name: 'Camila Torres', role: 'CMO',               skinTone: 2, hairStyle: 1 },
+      { name: 'Rafael Nunes',  role: 'Growth Hacker',     skinTone: 3, hairStyle: 2 },
+      { name: 'Beatriz Leal',  role: 'Content Creator',   skinTone: 1, hairStyle: 3 },
+    ]
+  }
+];
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
 let agents       = [];
@@ -391,6 +433,60 @@ function createModal(html) {
 }
 
 // ── NEW AGENT MODAL ───────────────────────────────────────────────────────────
+function getAgentSuggestionsForTeam(teamId) {
+  const team = teams.find(t => t.id === teamId);
+  if (!team) return [];
+  const preset = PRESET_TEAMS.find(p => p.name.toLowerCase() === team.name.toLowerCase());
+  if (!preset) return [];
+  const existingNames = new Set(agents.filter(a => a.teamId === teamId).map(a => a.name.toLowerCase()));
+  return preset.agents.filter(a => !existingNames.has(a.name.toLowerCase()));
+}
+
+function renderAgentSuggestions(teamId) {
+  const container = document.getElementById('agent-suggestions-section');
+  if (!container) return;
+  const suggestions = getAgentSuggestionsForTeam(teamId);
+  if (!suggestions.length) { container.innerHTML = ''; return; }
+  const cards = suggestions.map(a =>
+    `<div class="preset-card preset-card-agent" onclick="selectPresetAgent(this,'${a.name.replace(/'/g,"\\'")}','${a.role.replace(/'/g,"\\'")}',${a.skinTone},${a.hairStyle})">
+      <span class="preset-card-name">${a.name}</span>
+      <span class="preset-card-role">${a.role}</span>
+    </div>`
+  ).join('');
+  container.innerHTML = `
+    <div class="form-group">
+      <label class="form-label">Suggested Agents</label>
+      <div class="preset-cards-grid">${cards}</div>
+    </div>
+    <div class="preset-divider">— or configure a custom agent —</div>`;
+}
+
+window.selectPresetAgent = function(el, name, role, skinTone, hairStyle) {
+  document.querySelectorAll('.preset-card-agent').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('new-agent-name').value = name;
+  document.getElementById('new-agent-role').value = role;
+  // Update avatar
+  window._avatar.skinTone = skinTone;
+  window._avatar.hairStyle = hairStyle;
+  document.querySelectorAll('.option-btn').forEach(b => {
+    const v = parseInt(b.dataset.val ?? b.textContent);
+    if (!isNaN(v)) b.classList.remove('selected');
+  });
+  document.querySelectorAll('.option-row').forEach(row => {
+    row.querySelectorAll('.option-btn').forEach(b => {
+      const v = parseInt(b.textContent) || parseInt(b.textContent.replace('Style ',''));
+      if (v === skinTone || v === hairStyle) b.classList.add('selected');
+    });
+  });
+  // Re-select skin and hair buttons precisely
+  const skinBtns = document.querySelectorAll('.skin-btn');
+  skinBtns.forEach(b => b.classList.toggle('selected', parseInt(b.dataset.val) === skinTone));
+  const hairBtns = document.querySelectorAll('.hair-btn');
+  hairBtns.forEach(b => b.classList.toggle('selected', parseInt(b.dataset.val) === hairStyle));
+  updateAvatarPreview();
+};
+
 function openNewAgentModal() {
   const teamOptions = teams.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
   const colorSwatches = OUTFIT_COLORS.map((c,i) =>
@@ -403,6 +499,14 @@ function openNewAgentModal() {
       <button class="panel-close" onclick="closeAllModals()">✕</button>
     </div>
     <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Team / Department</label>
+        ${teams.length > 0
+          ? `<select id="new-agent-team" class="form-input" onchange="renderAgentSuggestions(this.value)">${teamOptions}</select>`
+          : `<div style="font-size:13px;color:var(--text-muted)">No teams yet. <a href="#" onclick="closeAllModals();openNewTeamModal()" style="color:var(--accent)">Create a team first</a>.</div>`
+        }
+      </div>
+      <div id="agent-suggestions-section"></div>
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Name</label>
@@ -412,13 +516,6 @@ function openNewAgentModal() {
           <label class="form-label">Role / Position</label>
           <input id="new-agent-role" class="form-input" placeholder="e.g. CTO, QA Engineer" />
         </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Team / Department</label>
-        ${teams.length > 0
-          ? `<select id="new-agent-team" class="form-input">${teamOptions}</select>`
-          : `<div style="font-size:13px;color:var(--text-muted)">No teams yet. <a href="#" onclick="closeAllModals();openNewTeamModal()" style="color:var(--accent)">Create a team first</a>.</div>`
-        }
       </div>
       <div class="form-group">
         <label class="form-label">Focus & Personality</label>
@@ -437,11 +534,11 @@ function openNewAgentModal() {
             </div>
             <div>
               <div class="form-label" style="margin-bottom:6px">Skin Tone</div>
-              <div class="option-row">${[1,2,3,4].map(i=>`<button class="option-btn${i===1?' selected':''}" onclick="selectSkin(this,${i})">${i}</button>`).join('')}</div>
+              <div class="option-row">${[1,2,3,4].map(i=>`<button class="option-btn skin-btn${i===1?' selected':''}" data-val="${i}" onclick="selectSkin(this,${i})">${i}</button>`).join('')}</div>
             </div>
             <div>
               <div class="form-label" style="margin-bottom:6px">Hair Style</div>
-              <div class="option-row">${[1,2,3,4].map(i=>`<button class="option-btn${i===1?' selected':''}" onclick="selectHair(this,${i})">Style ${i}</button>`).join('')}</div>
+              <div class="option-row">${[1,2,3,4].map(i=>`<button class="option-btn hair-btn${i===1?' selected':''}" data-val="${i}" onclick="selectHair(this,${i})">Style ${i}</button>`).join('')}</div>
             </div>
           </div>
         </div>
@@ -453,7 +550,12 @@ function openNewAgentModal() {
     </div>`;
 
   createModal(html);
+  window._avatar = { color: OUTFIT_COLORS[0], skinTone: 1, hairStyle: 1 };
   updateAvatarPreview();
+  // Render suggestions for the initially selected team
+  if (teams.length > 0) {
+    renderAgentSuggestions(teams[0].id);
+  }
 }
 
 window._avatar = { color: OUTFIT_COLORS[0], skinTone: 1, hairStyle: 1 };
@@ -513,9 +615,26 @@ window.submitNewAgent = async function() {
 const TEAM_COLORS = ['#7c3aed','#06b6d4','#10b981','#f59e0b','#ef4444','#ec4899'];
 
 function openNewTeamModal() {
+  const existingNames = new Set(teams.map(t => t.name.toLowerCase()));
+  const presetCards = PRESET_TEAMS
+    .filter(p => !existingNames.has(p.name.toLowerCase()))
+    .map(p =>
+      `<div class="preset-card" data-color="${p.color}" onclick="selectPresetTeam(this,'${p.name}','${p.color}')">
+        <span class="preset-card-icon">${p.icon}</span>
+        <span class="preset-card-name">${p.name}</span>
+      </div>`
+    ).join('');
+
   const swatches = TEAM_COLORS.map((c,i) =>
     `<div class="color-swatch${i===0?' selected':''}" style="background:${c}" onclick="this.closest('.modal').querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('selected'));this.classList.add('selected');document.getElementById('new-team-color').value='${c}'"></div>`
   ).join('');
+
+  const suggestionsSection = presetCards ? `
+    <div class="form-group">
+      <label class="form-label">Quick Suggestions</label>
+      <div class="preset-cards-grid">${presetCards}</div>
+    </div>
+    <div class="preset-divider">— or create a custom team —</div>` : '';
 
   const html = `
     <div class="modal-header">
@@ -523,6 +642,7 @@ function openNewTeamModal() {
       <button class="panel-close" onclick="closeAllModals()">✕</button>
     </div>
     <div class="modal-body">
+      ${suggestionsSection}
       <div class="form-group">
         <label class="form-label">Team Name</label>
         <input id="new-team-name" class="form-input" placeholder="e.g. Engineering, Marketing, C-Level" />
@@ -530,7 +650,7 @@ function openNewTeamModal() {
       <div class="form-group">
         <label class="form-label">Team Color</label>
         <input type="hidden" id="new-team-color" value="${TEAM_COLORS[0]}" />
-        <div class="color-grid">${swatches}</div>
+        <div class="color-grid" id="team-color-grid">${swatches}</div>
       </div>
     </div>
     <div class="modal-footer">
@@ -539,6 +659,20 @@ function openNewTeamModal() {
     </div>`;
   createModal(html);
 }
+
+window.selectPresetTeam = function(el, name, color) {
+  document.querySelectorAll('.preset-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('new-team-name').value = name;
+  document.getElementById('new-team-color').value = color;
+  // Sync color swatches visual selection
+  const grid = document.getElementById('team-color-grid');
+  if (grid) {
+    grid.querySelectorAll('.color-swatch').forEach(s => {
+      s.classList.toggle('selected', s.style.background === color || s.getAttribute('style') === `background: ${color}`);
+    });
+  }
+};
 
 window.submitNewTeam = async function() {
   const name  = document.getElementById('new-team-name')?.value.trim();

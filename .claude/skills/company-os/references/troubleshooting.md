@@ -13,24 +13,37 @@ npx kill-port 3000
 
 ---
 
-## No ANTHROPIC_API_KEY
+## Agents Not Visible / Canvas is Empty
 
-**Error**: The agents think but never respond, or you see authentication errors in logs.
+**Symptom**: The dashboard loads but no avatars appear.
 
-**Fix**:
-1. Create a `.env` file at the project root.
-2. Add: `ANTHROPIC_API_KEY=sk-ant-...your-key...`
-3. Restart with `npx company-os start`.
+**Fix**: Create at least one agent. Press `N` in the dashboard, or use the REST API:
+```bash
+# 1. Create a team
+curl -s -X POST http://localhost:3000/api/teams \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Engineering", "color": "#4A90D9"}'
 
-You can get a key at https://console.anthropic.com.
+# 2. Create an agent (use the teamId returned above)
+curl -s -X POST http://localhost:3000/api/agents \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Alex", "role": "Backend Engineer", "teamId": "<team-id>"}'
+```
 
 ---
 
-## No Agents Found (for `ask` or `meeting` commands)
+## Agents Do Not Respond / Stay Silent
 
-**Error**: `❌ No agents found. Start company-os first and create some agents.`
+**Symptom**: Agents are visible but never say anything.
 
-**Fix**: Run `npx company-os start`, open the dashboard, and create at least one agent using the **+ New Agent** button or the REST API.
+**Explanation**: Company-OS is a passive visual engine. Agents do not generate
+speech on their own. All agent speech must be sent by Claude Code via
+`POST /api/agents/:id/speak`.
+
+Ask Claude Code to "make agent X speak about Y". Claude Code will generate the
+response using its own model and post it to the server.
+
+No `ANTHROPIC_API_KEY` is needed — the server never calls the Anthropic API.
 
 ---
 
@@ -38,7 +51,7 @@ You can get a key at https://console.anthropic.com.
 
 **Error**: `❌ No context found. Run "company-os scan" first.`
 
-**Fix**: Run `npx company-os scan` before `report`.
+**Fix**: Run `npx company-os scan` before using the `report` command.
 
 ---
 
@@ -71,17 +84,30 @@ Make sure you have TypeScript 5.5+ and Node.js 20+ installed.
 
 ---
 
-## Agents Not Thinking / Silent
+## File Watcher Not Triggering Re-Scans
 
-- Agents think every `agentThinkInterval` minutes (default: 5). Wait or lower the interval in `company-os.config.js`.
-- Check `.company-os/` logs (Winston writes to files, not stdout).
-- Verify `ANTHROPIC_API_KEY` is valid and has quota.
+Company-OS uses `chokidar` to watch for file changes. If re-scans do not fire:
+- Press **R** in the dashboard to manually trigger a scan.
+- Or call `POST /api/project/scan` from the REST API:
+  ```bash
+  curl -s -X POST http://localhost:3000/api/project/scan
+  ```
+- On Windows, ensure antivirus software is not blocking file system events.
 
 ---
 
-## File Watcher Not Triggering Re-Scans
+## Meeting Will Not Start
 
-Company-OS uses `chokidar` to watch for file changes. If re-scans don't fire:
-- Press **R** in the dashboard to manually trigger a scan.
-- Or call `POST /api/project/scan` from the REST API.
-- On Windows, ensure antivirus software isn't blocking file system events.
+**Error**: `{ "error": "Meeting already in progress" }` (HTTP 409)
+
+A meeting is already running. Check its current state:
+```bash
+curl -s http://localhost:3000/api/visual/meetings/current
+```
+
+If a meeting is stuck (e.g. the server was restarted mid-meeting), restarting
+the server will clear it:
+```bash
+# Ctrl+C to stop, then:
+npx company-os start
+```
