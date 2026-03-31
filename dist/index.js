@@ -100,7 +100,7 @@ async function initializeSystem(config) {
         orchestrator.setProjectContext(newContext);
         console.log('✅ Context updated');
     });
-    return { scanner, analyzer, contextBuilder, orchestrator, meetingOrchestrator, context };
+    return { scanner, analyzer, contextBuilder, orchestrator, meetingOrchestrator, context, dataDir };
 }
 // ─── Commands ──────────────────────────────────────────────────────────────────
 program
@@ -112,7 +112,7 @@ program
     console.log('\n🏢 Company-OS Starting...\n');
     const config = await loadConfig(projectPath);
     config.port = parseInt(opts.port, 10);
-    const { scanner, analyzer, contextBuilder, orchestrator, meetingOrchestrator, context } = await initializeSystem(config);
+    const { scanner, analyzer, contextBuilder, orchestrator, meetingOrchestrator, context, dataDir } = await initializeSystem(config);
     const { httpServer } = (0, server_1.createExpressServer)({
         orchestrator,
         meetingOrchestrator,
@@ -121,6 +121,7 @@ program
         analyzer,
         port: config.port,
         projectName: context.projectName,
+        dataDir,
     });
     // Graceful shutdown
     const shutdown = () => {

@@ -262,7 +262,8 @@ window.addEventListener('keydown', (e) => {
     case 't': openNewTeamModal(); break;
     case 'r': triggerScan(); break;
     case 'm': openMeetingModal(); break;
-    case 'escape': closeAllModals(); closePanel(); break;
+    case 'f': fileManagerOpen ? closeFileManager() : openFileManager(); break;
+    case 'escape': closeAllModals(); closePanel(); closeFileManager(); break;
     case ' ': paused = !paused; e.preventDefault(); break;
     case 'tab':
       if (agents.length) {
@@ -743,10 +744,193 @@ window.submitMeeting = async function() {
   } catch(e) { notify('Error', String(e), 'error'); }
 };
 
+// ─── FILE MANAGER ─────────────────────────────────────────────────────────────
+let fileManagerOpen = false;
+let allFiles        = [];
+
+const FILE_ICONS = {
+  logo: '🖼️',
+  font: '🔤',
+  'color-palette': '🎨',
+  guideline: '📏',
+  document: '📄',
+  other: '📎',
+};
+
+function openFileManager() {
+  fileManagerOpen = true;
+  document.getElementById('file-manager-panel').classList.add('open');
+  loadFiles();
+}
+
+function closeFileManager() {
+  fileManagerOpen = false;
+  document.getElementById('file-manager-panel').classList.remove('open');
+}
+
+function fmFormatBytes(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+function fmFormatDate(iso) {
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function fmPopulateTeamSelects() {
+  const filterSel = document.getElementById('fm-team-filter');
+  const uploadSel = document.getElementById('fm-upload-team');
+  teams.forEach(t => {
+    if (filterSel && !filterSel.querySelector(`option[value="${t.id}"]`)) {
+      const opt = document.createElement('option');
+      opt.value = t.id; opt.textContent = t.name;
+      filterSel.appendChild(opt);
+    }
+    if (uploadSel && !uploadSel.querySelector(`option[value="${t.id}"]`)) {
+      const opt = document.createElement('option');
+      opt.value = t.id; opt.textContent = t.name;
+      uploadSel.appendChild(opt);
+    }
+  });
+}
+
+async function loadFiles() {
+  fmPopulateTeamSelects();
+  try {
+    const res  = await fetch('/api/files');
+    const data = await res.json();
+    allFiles = data.files ?? [];
+    renderFileList();
+  } catch(e) {
+    notify('Error', 'Failed to load files', 'error');
+  }
+}
+
+function renderFileList() {
+  const container     = document.getElementById('fm-file-list');
+  const teamFilter    = document.getElementById('fm-team-filter')?.value ?? '';
+  const categoryFilter = document.getElementById('fm-category-filter')?.value ?? '';
+
+  let filtered = allFiles;
+  if (teamFilter)     filtered = filtered.filter(f => f.teamId === teamFilter);
+  if (categoryFilter) filtered = filtered.filter(f => f.category === categoryFilter);
+
+  if (!filtered.length) {
+    container.innerHTML = '<div class="fm-empty">No files yet.<br>Upload the first asset!</div>';
+    return;
+  }
+
+  container.innerHTML = filtered.map(f => {
+    const icon = FILE_ICONS[f.category] ?? '📎';
+    const safeName = f.filename.replace(/'/g, "\\'");
+    return `
+      <div class="fm-file-card">
+        <div class="fm-file-icon">${icon}</div>
+        <div class="fm-file-info">
+          <div class="fm-file-name" title="${f.filename}">${f.filename}</div>
+          <div class="fm-file-meta">${f.teamName} · ${fmFormatBytes(f.size)}</div>
+          <div class="fm-file-meta">${f.uploadedBy} · ${fmFormatDate(f.uploadedAt)}</div>
+        </div>
+        <span class="fm-category-badge">${f.category}</span>
+        <div class="fm-actions">
+          <button class="fm-btn-icon" title="Download" onclick="fmDownload('${f.id}','${safeName}')">⬇</button>
+          <button class="fm-btn-icon delete" title="Delete" onclick="fmDelete('${f.id}')">🗑</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+window.fmDownload = function(id, filename) {
+  const a = document.createElement('a');
+  a.href = `/api/files/${id}/download`;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+};
+
+window.fmDelete = async function(id) {
+  if (!confirm('Delete this file? This cannot be undone.')) return;
+  try {
+    const res = await fetch(`/api/files/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(await res.text());
+  } catch(e) {
+    notify('Delete failed', String(e), 'error');
+  }
+};
+
+// Upload handler
+document.getElementById('fm-file-label')?.addEventListener('click', () => {
+  document.getElementById('fm-file-input')?.click();
+});
+
+document.getElementById('fm-file-input')?.addEventListener('change', (e) => {
+  const label = document.getElementById('fm-file-label');
+  const file  = e.target.files?.[0];
+  if (file && label) label.textContent = `📎 ${file.name}`;
+});
+
+document.getElementById('fm-upload-btn')?.addEventListener('click', async () => {
+  const fileInput = document.getElementById('fm-file-input');
+  const teamId    = document.getElementById('fm-upload-team')?.value;
+  const category  = document.getElementById('fm-upload-category')?.value;
+  const file      = fileInput?.files?.[0];
+
+  if (!file)     { notify('No file', 'Choose a file first', 'error'); return; }
+  if (!teamId)   { notify('No team', 'Select a team', 'error'); return; }
+  if (!category) { notify('No category', 'Select a category', 'error'); return; }
+
+  const btn = document.getElementById('fm-upload-btn');
+  btn.disabled = true; btn.textContent = '⬆ Uploading...';
+
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('teamId', teamId);
+  formData.append('category', category);
+
+  try {
+    const res = await fetch('/api/files/upload', { method: 'POST', body: formData });
+    if (!res.ok) throw new Error(await res.text());
+    fileInput.value = '';
+    document.getElementById('fm-file-label').textContent = '📎 Choose file...';
+    notify('Uploaded!', file.name, 'success');
+  } catch(e) {
+    notify('Upload failed', String(e), 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '⬆ Upload';
+  }
+});
+
+// Filter change handlers
+document.getElementById('fm-team-filter')?.addEventListener('change', renderFileList);
+document.getElementById('fm-category-filter')?.addEventListener('change', renderFileList);
+
+// Close button
+document.getElementById('fm-close')?.addEventListener('click', closeFileManager);
+
+// Socket.io file events
+socket.on('file:uploaded', (file) => {
+  allFiles.push(file);
+  if (fileManagerOpen) renderFileList();
+  notify('📎 File Uploaded', `${file.filename} (${file.teamName})`, 'success');
+});
+
+socket.on('file:deleted', (d) => {
+  allFiles = allFiles.filter(f => f.id !== d.id);
+  if (fileManagerOpen) renderFileList();
+});
+
+// Repopulate team selects whenever a new team is created
+socket.on('team:created', () => {
+  if (fileManagerOpen) fmPopulateTeamSelects();
+});
+
 // ─── BUTTONS ──────────────────────────────────────────────────────────────────
 document.getElementById('btn-new-agent').addEventListener('click', openNewAgentModal);
 document.getElementById('btn-new-team').addEventListener('click', openNewTeamModal);
 document.getElementById('btn-meeting').addEventListener('click', openMeetingModal);
+document.getElementById('btn-files').addEventListener('click', openFileManager);
 document.getElementById('btn-report').addEventListener('click', () => window.open('/api/project/context', '_blank'));
 document.getElementById('btn-settings').addEventListener('click', () => notify('Settings', 'Edit company-os.config.js to configure', 'info'));
 document.getElementById('btn-rescan').addEventListener('click', triggerScan);

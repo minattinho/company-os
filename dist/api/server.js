@@ -45,6 +45,7 @@ const fs = __importStar(require("fs"));
 const agents_1 = require("./routes/agents");
 const project_1 = require("./routes/project");
 const visual_1 = require("./routes/visual");
+const files_1 = require("./routes/files");
 const logger_1 = require("../utils/logger");
 function createExpressServer(deps) {
     const app = (0, express_1.default)();
@@ -63,6 +64,7 @@ function createExpressServer(deps) {
     app.use('/api/agents', (0, agents_1.agentsRouter)(deps.orchestrator));
     app.use('/api/project', (0, project_1.projectRouter)(deps.contextBuilder, deps.scanner, deps.analyzer));
     app.use('/api/visual', (0, visual_1.visualRouter)(deps.meetingOrchestrator));
+    app.use('/api/files', (0, files_1.filesRouter)(deps.dataDir, io, deps.orchestrator));
     // Health check
     app.get('/api/health', (_req, res) => {
         res.json({

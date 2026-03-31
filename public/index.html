@@ -692,6 +692,106 @@
       z-index: 200;
       color: var(--text);
     }
+
+    /* ─── FILE MANAGER PANEL ─────────────────────────────────────────────── */
+    #file-manager-panel {
+      position: fixed;
+      top: var(--hud-h);
+      left: -360px;
+      width: var(--panel-w);
+      bottom: var(--status-h);
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      z-index: 90;
+      transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #file-manager-panel.open { left: 0; }
+
+    .fm-toolbar {
+      padding: 10px 16px;
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .fm-select { font-size: 12px; padding: 6px 10px; flex: 1; }
+
+    .fm-file-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+      transition: border-color 0.15s;
+    }
+    .fm-file-card:hover { border-color: var(--accent2); }
+    .fm-file-icon { font-size: 22px; flex-shrink: 0; }
+    .fm-file-info { flex: 1; min-width: 0; }
+    .fm-file-name {
+      font-size: 13px; font-weight: 600;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .fm-file-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .fm-category-badge {
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 10px;
+      background: rgba(6,182,212,0.15);
+      color: var(--accent2);
+      border: 1px solid rgba(6,182,212,0.25);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .fm-actions { display: flex; gap: 4px; flex-shrink: 0; }
+    .fm-btn-icon {
+      background: none; border: none;
+      color: var(--text-muted); font-size: 14px;
+      cursor: pointer; padding: 4px;
+      border-radius: 4px;
+    }
+    .fm-btn-icon:hover { color: var(--text); background: var(--surface); }
+    .fm-btn-icon.delete:hover { color: var(--danger); }
+
+    .fm-upload-zone {
+      padding: 14px 16px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+      background: var(--surface);
+    }
+    .fm-file-label {
+      display: block;
+      background: var(--surface2);
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: border-color 0.15s;
+      margin-bottom: 0;
+    }
+    .fm-file-label:hover { border-color: var(--accent2); color: var(--accent2); }
+
+    .fm-empty {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13px;
+      padding: 32px 16px;
+    }
+
+    .btn-files {
+      background: rgba(16,185,129,0.15);
+      color: var(--success);
+      border: 1px solid rgba(16,185,129,0.3);
+    }
+    .btn-files:hover { background: rgba(16,185,129,0.25); }
   </style>
 </head>
 <body>
@@ -723,6 +823,7 @@
     <button id="btn-new-agent" class="btn btn-primary" data-tip="[N] New Agent">+ New Agent</button>
     <button id="btn-new-team" class="btn btn-secondary" data-tip="[T] New Team">+ New Team</button>
     <button id="btn-meeting" class="btn btn-amber" data-tip="[M] Call Meeting">📅 Meeting</button>
+    <button id="btn-files" class="btn btn-files" data-tip="[F] File Manager">🗂️ Files</button>
     <button id="btn-rescan" class="btn btn-teal" data-tip="[R] Re-scan">🔍 Scan</button>
     <button id="btn-report" class="btn btn-secondary" data-tip="Executive Report">📋 Report</button>
     <button id="btn-settings" class="btn btn-secondary" data-tip="Settings">⚙️</button>
@@ -773,6 +874,56 @@
   <div class="panel-ask">
     <textarea class="panel-input" id="panel-question" placeholder="Ask this agent anything about your project..."></textarea>
     <button class="panel-send" id="panel-send">→ Ask</button>
+  </div>
+</div>
+
+<!-- File Manager Panel -->
+<div id="file-manager-panel">
+  <div class="panel-header">
+    <div class="panel-info">
+      <div class="panel-name">🗂️ Brand Kit &amp; Files</div>
+      <div class="panel-role">Company assets by team</div>
+    </div>
+    <button class="panel-close" id="fm-close">✕</button>
+  </div>
+
+  <div class="fm-toolbar">
+    <select id="fm-team-filter" class="form-input fm-select">
+      <option value="">All Teams</option>
+    </select>
+    <select id="fm-category-filter" class="form-input fm-select">
+      <option value="">All Categories</option>
+      <option value="logo">Logos</option>
+      <option value="font">Fonts</option>
+      <option value="color-palette">Colors</option>
+      <option value="guideline">Guidelines</option>
+      <option value="document">Documents</option>
+      <option value="other">Other</option>
+    </select>
+  </div>
+
+  <div class="panel-body" id="fm-file-list">
+    <div class="fm-empty">No files yet.<br>Upload the first asset!</div>
+  </div>
+
+  <div class="fm-upload-zone">
+    <div class="panel-section-title">Upload File</div>
+    <select id="fm-upload-team" class="form-input" style="margin-bottom:8px">
+      <option value="">Select team...</option>
+    </select>
+    <select id="fm-upload-category" class="form-input" style="margin-bottom:8px">
+      <option value="logo">Logo</option>
+      <option value="font">Font</option>
+      <option value="color-palette">Color Palette</option>
+      <option value="guideline">Guideline</option>
+      <option value="document">Document</option>
+      <option value="other">Other</option>
+    </select>
+    <label class="fm-file-label" id="fm-file-label">
+      <input type="file" id="fm-file-input" style="display:none" />
+      📎 Choose file...
+    </label>
+    <button class="btn btn-primary" id="fm-upload-btn" style="width:100%;margin-top:8px">⬆ Upload</button>
   </div>
 </div>
 

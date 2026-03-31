@@ -79,7 +79,7 @@ async function initializeSystem(config: CompanyOSConfig) {
     console.log('✅ Context updated');
   });
 
-  return { scanner, analyzer, contextBuilder, orchestrator, meetingOrchestrator, context };
+  return { scanner, analyzer, contextBuilder, orchestrator, meetingOrchestrator, context, dataDir };
 }
 
 // ─── Commands ──────────────────────────────────────────────────────────────────
@@ -95,7 +95,7 @@ program
     const config = await loadConfig(projectPath);
     config.port = parseInt(opts.port, 10);
 
-    const { scanner, analyzer, contextBuilder, orchestrator, meetingOrchestrator, context } =
+    const { scanner, analyzer, contextBuilder, orchestrator, meetingOrchestrator, context, dataDir } =
       await initializeSystem(config);
 
     const { httpServer } = createExpressServer({
@@ -106,6 +106,7 @@ program
       analyzer,
       port: config.port,
       projectName: context.projectName,
+      dataDir,
     });
 
     // Graceful shutdown

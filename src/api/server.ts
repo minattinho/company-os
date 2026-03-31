@@ -11,6 +11,7 @@ import { FileAnalyzer } from '../scanner/FileAnalyzer';
 import { agentsRouter } from './routes/agents';
 import { projectRouter } from './routes/project';
 import { visualRouter } from './routes/visual';
+import { filesRouter } from './routes/files';
 import { logger } from '../utils/logger';
 
 export interface ServerDeps {
@@ -21,6 +22,7 @@ export interface ServerDeps {
   analyzer: FileAnalyzer;
   port: number;
   projectName: string;
+  dataDir: string;
 }
 
 export function createExpressServer(deps: ServerDeps) {
@@ -43,6 +45,7 @@ export function createExpressServer(deps: ServerDeps) {
   app.use('/api/agents', agentsRouter(deps.orchestrator));
   app.use('/api/project', projectRouter(deps.contextBuilder, deps.scanner, deps.analyzer));
   app.use('/api/visual', visualRouter(deps.meetingOrchestrator));
+  app.use('/api/files', filesRouter(deps.dataDir, io, deps.orchestrator));
 
   // Health check
   app.get('/api/health', (_req, res) => {

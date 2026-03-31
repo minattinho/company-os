@@ -12,6 +12,7 @@ export interface ServerDeps {
     analyzer: FileAnalyzer;
     port: number;
     projectName: string;
+    dataDir: string;
 }
 export declare function createExpressServer(deps: ServerDeps): {
     app: import("express-serve-static-core").Express;

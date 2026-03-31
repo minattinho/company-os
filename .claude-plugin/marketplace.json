@@ -1,0 +1,23 @@
+{
+  "name": "company-os",
+  "owner": {
+    "name": "Gabriel"
+  },
+  "metadata": {
+    "description": "Company OS — virtual office SDK with AI agent orchestration",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "company-os",
+      "source": "./",
+      "description": "Virtual office SDK: agents, teams, meetings, brand kit file manager and 2D canvas dashboard",
+      "version": "1.0.0",
+      "author": {
+        "name": "Gabriel"
+      },
+      "category": "productivity",
+      "keywords": ["team", "agents", "virtual-office", "orchestration", "brand-kit"]
+    }
+  ]
+}
